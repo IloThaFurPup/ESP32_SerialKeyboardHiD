@@ -1,88 +1,136 @@
 #include <Arduino.h>
-#include <KeyboardDevice.h> 
+#include <KeyboardDevice.h>
 #include <BleCompositeHID.h>
 #include <list>
 #include <string>
 #include <algorithm>
 
-BleCompositeHID dispositivoBLE("Teclado", "IloThaFurPup", 100); // We specify (<Name of the device>, <Author / Manufacturer>, <Battery percentage (leave in 100 by now)>)
-KeyboardDevice* teclado; // And how the device is going to be called in the code
+BleCompositeHID dispositivoBLE("Keyboard", "IloThaFurPup", 100); // Name, creator, battery percentage
+KeyboardDevice* teclado;
 
-bool connectedBefore = false;
+bool conectadoAntes = false;
 
 void setup() {
-  Serial.begin(115200); //Start serial
+  Serial.begin(115200);
   
-  teclado = new KeyboardDevice(); 
+  teclado = new KeyboardDevice();
   dispositivoBLE.addDevice(teclado);
-  dispositivoBLE.begin(); // Inital setup
+  dispositivoBLE.begin();
  Serial.println("All ready and waiting for user!");
+// set up
 }
-
 void loop() {
 
-  bool connectedNow = dispositivoBLE.isConnected();
+  bool conectadoAhora = dispositivoBLE.isConnected();
 
-  if (connectedNow && !connectedBefore) { // if it is connected by the first time
+  if (conectadoAhora && !conectadoAntes) {
     Serial.println("Connected!");
   }
 
-  if (!connectedNow && connectedBefore) { // if it was connected but disconnected
-    Serial.println("Disconnected...");
-    Serial.println("Waiting for other connection...");
+  if (!conectadoAhora && conectadoAntes) {
+    Serial.println("Desconectado...");
+    Serial.println("Waiting for other connection");
   }
 
-  connectedBefore = connectedNow; // Executes afterwards so the messages won't repeat
+  conectadoAntes = conectadoAhora;
 
-  if (connectedNow) { // If it is connected
-    writeInTerminal(); //Do function  
+  if (conectadoAhora) {
+    writeInTerminal(); // do function if connected
   }
 }
 
 
 void writeInTerminal() {
   
-  if (!Serial.available()) return; // If serial isn't avaliable don't do anything
-  String Dato = Serial.readStringUntil('\n'); // Read the string gotten until '\n' ('\n' == enter)
-  Dato.trim(); // Deletes '\n'
+  if (!Serial.available()) return;
+  String data = Serial.readStringUntil('\n');
+  data.trim(); // Read serial
+
+  bool tabPrs = false;
+  bool ctrlPrs = false;
 
   std::list<String> comandosValidos = {"!MAYUS",
-                                       "!ENTR", 
-                                       "!DEL"};
+                                        "!ENTR",
+                                        "!CTRL", 
+                                        "!ESC", 
+                                        "!DEL", 
+                                        "!TAB", 
+                                        "!BKSP", 
+                                        "!INS", 
+                                        "!HOME", 
+                                        "!PGUP", 
+                                        "!DEL", 
+                                        "!END", 
+                                        "!PGDW", 
+                                        "!UP", 
+                                        "!DWN", 
+                                        "!LFT", 
+                                        "!RGHT",
+                                        "!LSHF",}; // All valid commands
 
-auto it = std::find(comandosValidos.begin(), comandosValidos.end(), Dato); // We ask "it" to find in between the begin and end of the list of valid commands the variable "Dato"
-  if (it != comandosValidos.end()) { // if 'it' isn't the end, a coincidence was found
-  
-/*
-From here we will:
-Detect the type command
-Translate it to one of the three buttons (Caps, enter or backspace)
-*/
 
 
-        if (Dato == "!MAYUS"){
-          teclado->keyClick(KEY_CAPSLOCK);
-          Serial.println("Caps clicked");
-        }if (Dato == "!ENTR"){
+auto it = std::find(comandosValidos.begin(), comandosValidos.end(), data);
+  if (it != comandosValidos.end()) { // Si 'it' isn't at the end, one of the commands were found
+        if (data == "!MAYUS"){
+          teclado->keyClick(KEY_CAPSLOCK); //if command, then click key
+          Serial.println("Caps pressed");
+        }else if (data == "!ENTR"){
           teclado->keyClick(KEY_ENTER);
           Serial.println("Enter");
-        }if (Dato == "!DEL") {
+        }else if (data == "!ESC"){
+          teclado->keyClick(KEY_ESC);
+          Serial.println("Escape pressed");
+        }else if (data == "!CTRL"){
+          teclado->keyClick(KEY_LEFTCTRL);
+          Serial.println("Control pressed");
+        }else if (data == "!TAB"){
+          teclado->keyClick(KEY_TAB);
+          Serial.println("Tab pressed");
+        }else if (data == "!BKSP") {
           teclado->keyClick(KEY_BACKSPACE);
-          Serial.println("Backspace");
+          Serial.println("Backspace pressed");
+        }else if (data == "!INS"){
+          teclado->keyClick(KEY_INSERT);
+          Serial.println("Insert pressed");
+        }else if (data == "!HOME"){
+          teclado->keyClick(KEY_HOME);
+          Serial.println("Home pressed");
+        }else if (data == "!PGUP"){
+          teclado->keyClick(KEY_PAGEUP);
+          Serial.println("Page up pressed");
+        }else if (data == "!DEL"){
+          teclado->keyClick(KEY_DELETE);
+          Serial.println("Key forward delete pressed");
+        }else if (data == "!END"){
+          teclado->keyClick(KEY_END);
+          Serial.println("Page end pressed");
+        }else if (data == "!PGDW") {
+          teclado->keyClick(KEY_PAGEDOWN);
+          Serial.println("Page down pressed");
+        }else if (data == "!UP"){
+          teclado->keyClick(KEY_UP);
+          Serial.println("Arrow up pressed");
+        }else if (data == "!DWN"){
+          teclado->keyClick(KEY_DOWN);
+          Serial.println("Arrow down pressed");
+        }else if (data == "!LFT"){
+          teclado->keyClick(KEY_LEFT);
+          Serial.println("Arrow left pressed");
+        }else if (data == "!RGHT") {
+          teclado->keyClick(KEY_RIGHT);
+          Serial.println("Arrow right pressed");
+        }else if (data == "!LSHF"){
+          teclado->keyClick(KEY_LEFTSHIFT);
+          Serial.println("Shift pressed");
         }
     } else {
  
-for (int i = 0; i < Dato.length(); i++) { // 'i' is zero, while Dato length is bigger than 'i', 'i' will add up to 1
-  char c = Dato[i]; // c is the index of 'i', which is adding up to one until it is bigger than 'i', so each letter will be wrote
+for (int i = 0; i < data.length(); i++) {
+  char c = data[i]; // goes through every letter by adding 1
 
-/*
-From here:
-We will detect the character ('c') and depending on what character it is, it will click the corresponding button
-Reamamber this is a EN keyboard, other keys or if the system has another layout, the changes won't be perfect for the non alpha-numeric characters
-*/
-
-  switch (c) { 
-    case '_':// for the second options in the right of you keyboard (ouch), with the shift)
+  switch (c) { // sends in base of what 'c' is
+    case '_': 
       teclado->modifierKeyPress(KEY_MOD_LSHIFT);
       delay(10);
       teclado->keyClick(KEY_MINUS);
@@ -141,7 +189,7 @@ Reamamber this is a EN keyboard, other keys or if the system has another layout,
       teclado->keyClick(KEY_SLASH);
       teclado->modifierKeyRelease(KEY_MOD_LSHIFT);
       break;
-    case '-': // for the first options in the right of you keyboard)
+    case '-':
       teclado->keyClick(KEY_MINUS);
       break;
     case '=':
@@ -170,7 +218,7 @@ Reamamber this is a EN keyboard, other keys or if the system has another layout,
     case '/':
       teclado->keyClick(KEY_SLASH);
       break;
-    case 'a': //lowercase
+    case 'a':
       teclado->keyClick(KEY_A);
       break;
     case 'b':
@@ -248,10 +296,10 @@ Reamamber this is a EN keyboard, other keys or if the system has another layout,
     case 'z':
       teclado->keyClick(KEY_Z);
       break;
-    case ' ': //space
+    case ' ':
       teclado->keyClick(KEY_SPACE);
       break;
-    case '1': // numbers
+    case '1':
       teclado->keyClick(KEY_1);
       break;
     case '2':
@@ -281,7 +329,7 @@ Reamamber this is a EN keyboard, other keys or if the system has another layout,
     case '0':
       teclado->keyClick(KEY_0);
       break;
-    case '!': //Second option next to numbers
+    case '!':
       teclado->modifierKeyPress(KEY_MOD_LSHIFT);
       teclado->keyClick(KEY_1);
       teclado->modifierKeyRelease(KEY_MOD_LSHIFT);
@@ -340,7 +388,8 @@ Reamamber this is a EN keyboard, other keys or if the system has another layout,
       teclado->keyClick(KEY_0);
       teclado->modifierKeyRelease(KEY_MOD_LSHIFT);
       break;
-    case 'A': //For all Upper case
+
+    case 'A':
       teclado->modifierKeyPress(KEY_MOD_LSHIFT);
       teclado->keyClick(KEY_A);
       teclado->modifierKeyRelease(KEY_MOD_LSHIFT);
@@ -494,7 +543,7 @@ Reamamber this is a EN keyboard, other keys or if the system has another layout,
       teclado->modifierKeyRelease(KEY_MOD_LSHIFT);
       break; 
    }
-  delay(25); // the click takes 10 seconds so, for the double letters to not jam, a delay is required, and for the other where you click the keymod.
+  delay(50);
   }
 }
 }
